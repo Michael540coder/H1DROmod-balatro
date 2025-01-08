@@ -81,12 +81,17 @@ SMODS.Joker {
             "left of this card",
             "{C:inactive}(If there's room)",
             "{C:attention}-1{} Joker slots"
+        },
+        unlock = {
+            "Find this Joker",
+            "from the Soul card."
         }
     },
-    rarity = 3,
+    rarity = 4,
     atlas = 'atlas',
     pos = {x = 1, y = 0},
-    cost = 4,
+    soul_pos = {x = 2, y = 0},
+    cost = 20,
     config = {extra = {slot_removed = false}},
     calculate = function(self, card, context)
         local left_card
@@ -123,6 +128,53 @@ SMODS.Joker {
     remove_from_deck = function(self, card, from_debuff)
         if card.ability.extra.slot_removed then
             G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+        end
+    end
+}
+
+SMODS.Joker {
+    key = 'jjj',
+    loc_txt = {
+        name = "J. J. Joker",
+        text = {
+            "Retrigger entire hand",
+            "if played hand contains",
+            "an {C:attention}Ace{} and a {C:attention}10{}"
+        }
+    },
+    rarity = 2,
+    atlas = 'atlas',
+    pos = {x=3, y=0},
+    cost = 7,
+    config = { extra = {has_ace = false, has_ten = false, repetitions = 1}},
+    calculate = function(self, card, context)
+        if context.cardarea == G.play and context.repetition and not context.repetition_only then
+            for _, hand_card in ipairs(G.play.cards) do
+                if hand_card:get_id() == 14 then
+                    card.ability.extra.has_ace = true
+                elseif hand_card:get_id() == 10 then
+                    card.ability.extra.has_ten = true
+                end
+
+                if card.ability.extra.has_ace == true and card.ability.extra.has_ten == true then
+                    break
+                end
+            end
+
+            if card.ability.extra.has_ace == true and card.ability.extra.has_ten == true then
+                print("We have an ace and a ten")
+                local result = {}
+
+                return {
+                    message = 'Again!',
+                    repetitions = card.ability.extra.repetitions,
+                    card = context.other_card
+                }
+            end
+        end
+        if context.after then
+            card.ability.extra.has_ten = false
+            card.ability.extra.has_ace = false
         end
     end
 }
